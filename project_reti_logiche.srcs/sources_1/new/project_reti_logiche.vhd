@@ -22,11 +22,48 @@ entity project_reti_logiche is
 end project_reti_logiche;
 
 architecture Behavioral of project_reti_logiche is
--- indicare qui i signal
+-- SIGNAL
+signal t_canale : STD_LOGIC_VECTOR(1 downto 0);
+signal t_indirizzo : STD_LOGIC_VECTOR(15 downto 0);
+signal reg_canale_load : STD_LOGIC;
 
 begin
-    -- indicare qui i registri
+    --------------------------------------------
+    -- Lettura canale di uscita su W
+    --------------------------------------------
+    -- Implemento uno shift register che permette di scorrere i due bit quando START=1. In questo caso non mi interessa avere un mux prima
+    -- dell'ingresso, perchè ho lunghezza fissa, quindi leggo sempre 2 bit.
+    ff0_canale: process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            t_canale(0) <= '0';
+        elsif rising_edge(i_clk) then
+            if(reg_canale_load = '1') then
+                t_canale(0) <= i_w;
+            end if;
+        end if;
+    end process;
     
-    
+    ff1_canale: process(i_clk, i_rst)
+        begin
+            if(i_rst = '1') then
+                t_canale(1) <= '0';
+            elsif rising_edge(i_clk) then
+                if(reg_canale_load = '1') then
+                    t_canale(1) <= t_canale(0);
+                end if;
+            end if;
+        end process;
+        
+    --------------------------------------------
+    -- Lettura dell'indirizzo su W
+    --------------------------------------------
+    -- Anche in questo caso implemento uno shift register per poter gestire automaticamente i bit dell'indirizzo. In questo caso invece,
+    -- uso il mux perchè al momento di reg_canale_load=1, ho bisogno che tutti i bit siano a 0. Serve il padding, che mi verrà fatto automaticamente 
+    -- dallo shift register.
+    with reg_canale_load select
+        t_indirizzo(0) <= '0' when '0',
+                          i_w when '1',
+                          'X' when others;
     
 end Behavioral;
