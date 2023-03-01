@@ -10,6 +10,8 @@ entity datapath is
 		i_mem_data : in STD_LOGIC_VECTOR(7 downto 0);
 		
 		m_canale_shift : in STD_LOGIC;
+		m_canale_save : in STD_LOGIC;
+		m_indirizzo_save : in STD_LOGIC;
 		m_indirizzo_shift : in STD_LOGIC;
 		m_rzx_load : in STD_LOGIC;
 		m_zx_sel : in STD_LOGIC;
@@ -30,6 +32,7 @@ signal t_rz1_load : STD_LOGIC;
 signal t_rz2_load : STD_LOGIC;
 signal t_rz3_load : STD_LOGIC;
 signal t_mem_addr : STD_LOGIC_VECTOR(15 downto 0);
+signal t_buffer : STD_LOGIC_VECTOR(17 downto 0);
 
 signal t_rz0 : STD_LOGIC_VECTOR(7 downto 0);
 signal t_rz1 : STD_LOGIC_VECTOR(7 downto 0);
@@ -37,21 +40,52 @@ signal t_rz2 : STD_LOGIC_VECTOR(7 downto 0);
 signal t_rz3 : STD_LOGIC_VECTOR(7 downto 0);
 
 begin
+
+    shift: process(i_clk, i_rst)
+    begin
+        if(i_rst = '1') then
+            t_buffer <= "000000000000000000";
+        elsif rising_edge(i_clk) then
+            if m_canale_save = '1' then
+                t_canale <= t_buffer(1 downto 0);
+                t_buffer(0) <= '0';
+                t_buffer(1) <= '0';
+            end if;
+            if m_indirizzo_save = '1' then
+                t_mem_addr <= t_buffer(16 downto 1);
+            end if;
+            t_buffer(17 downto 1) <= t_buffer(16 downto 0);
+            t_buffer(0) <= '0';
+            t_buffer(0) <= i_w;
+        end if;
+        o_mem_addr <= t_mem_addr;
+    end process;
+    
+--    with m_canale_save select
+--        t_buffer(0) <= '0' when '1',
+--                       t_buffer(0) when '0',
+--                       'X' when others;
+--   with m_canale_save select
+--        t_buffer(1) <= '0' when '1',
+--                        t_buffer(1) when '0',
+--                        'X' when others;
+                       
+    
     --------------------------------------------
     -- Lettura canale su W
     --------------------------------------------
     -- Implemento uno shift register che permette di scorrere i due bit quando START=1. In questo caso non mi interessa avere un mux prima
     -- dell'ingresso, perchè ho lunghezza fissa, quindi leggo sempre 2 bit.
-	canale_left_shift: process(i_clk, i_rst)
-	begin
-		if(i_rst = '1') then
-			t_canale <= "00";
-		elsif rising_edge(i_clk) and m_canale_shift='1' then
-			t_canale(1) <= t_canale(0);
-			t_canale(0) <= '0';
-			t_canale(0) <= i_w;
-		end if;
-	end process;
+--	canale_left_shift: process(i_clk, i_rst)
+--	begin
+--		if(i_rst = '1') then
+--			t_canale <= "00";
+--		elsif rising_edge(i_clk) and m_canale_shift='1' then
+--			t_canale(1) <= t_canale(0);
+--			t_canale(0) <= '0';
+--			t_canale(0) <= i_w;
+--		end if;
+--	end process;
         
     --------------------------------------------
     -- Lettura dell'indirizzo su W
@@ -59,17 +93,17 @@ begin
     -- Anche in questo caso implemento uno shift register per poter gestire automaticamente i bit dell'indirizzo a 0 dove non serve. In questo caso invece,
     -- uso il mux perchè al momento di reg_canale_load=1, ho bisogno che tutti i bit siano a 0. Serve il padding, che mi verrà fatto automaticamente 
     -- dallo shift register.
-	indirizzo_left_shift: process(i_clk, i_rst)
-	begin
-		if(i_rst = '1') then
-			t_mem_addr <= "0000000000000000";
-		elsif rising_edge(i_clk) and m_indirizzo_shift='1' then
-			t_mem_addr(15 downto 1) <= t_mem_addr(14 downto 0);
-			t_mem_addr(0) <= '0';
-			t_mem_addr(0) <= i_w;
-		end if;
-		o_mem_addr <= t_mem_addr;
-	end process;
+--	indirizzo_left_shift: process(i_clk, i_rst)
+--	begin
+--		if(i_rst = '1') then
+--			t_mem_addr <= "0000000000000000";
+--		elsif rising_edge(i_clk) and m_indirizzo_shift='1' then
+--			t_mem_addr(15 downto 1) <= t_mem_addr(14 downto 0);
+--			t_mem_addr(0) <= '0';
+--			t_mem_addr(0) <= i_w;
+--		end if;
+--		o_mem_addr <= t_mem_addr;
+--	end process;
 	
 	--------------------------------------------
     -- Uscita e gestione dei registri
@@ -210,6 +244,8 @@ component datapath is
 		i_mem_data : in STD_LOGIC_VECTOR(7 downto 0);
 		
 		m_canale_shift : in STD_LOGIC;
+		m_canale_save : in STD_LOGIC;
+		m_indirizzo_save : in STD_LOGIC;
 		m_indirizzo_shift : in STD_LOGIC;
 		m_rzx_load : in STD_LOGIC;
 		m_zx_sel : in STD_LOGIC;
@@ -223,12 +259,14 @@ component datapath is
 end component;
 -- Chiamo i signal come il nome dei componenti per mappare automaticamente 1:1
 signal m_canale_shift : STD_LOGIC;
+signal m_canale_save : STD_LOGIC;
+signal m_indirizzo_save : STD_LOGIC;
 signal m_indirizzo_shift : STD_LOGIC;
 signal m_rzx_load : STD_LOGIC;
 signal m_zx_sel : STD_LOGIC;
 
 -- Definisco la macchina a stati
-type S is (S0, S1, S2, S3, S4, S5, S6, S7);
+type S is (S0, S1, S2, S3, S4, S5, S6, S7, S8);
 signal cur_state, next_state : S;
 
 begin
@@ -241,6 +279,8 @@ begin
 		i_mem_data,
 		
 		m_canale_shift,
+		m_canale_save,
+		m_indirizzo_save,
 		m_indirizzo_shift,
 		m_rzx_load,
 		m_zx_sel,
@@ -300,7 +340,9 @@ begin
 			when S6 =>
 				next_state <= S7;
 			when S7 =>
-				next_state <= S0;
+				next_state <= S8;
+            when S8 =>
+                next_state <= S0;
         end case;
 	end process;
 	
@@ -311,6 +353,8 @@ begin
 	begin
 		-- Segnali del datapath
 		m_canale_shift <= '0';
+		m_canale_save <= '0';
+		m_indirizzo_save <= '0';
 		m_indirizzo_shift <= '0';
 		m_rzx_load <= '0';
 		m_zx_sel <= '0';
@@ -324,24 +368,23 @@ begin
 		case cur_state is
 			when S0 =>
 			when S1 =>
-				m_canale_shift <= '1';
+				--m_canale_shift <= '1';
 			when S2 =>
-				m_canale_shift <= '1';
+				--m_canale_shift <= '1';
+				m_canale_save <= '1';
 			when S3 =>
-				m_indirizzo_shift <= '1';
-			when S4 =>
-				o_mem_en <= '1';
+				--m_indirizzo_shift <= '1';
+            when S4 =>
+                m_indirizzo_save <= '1';
 			when S5 =>
+				o_mem_en <= '1';
 			when S6 =>
-				m_rzx_load <= '1';
 			when S7 =>
+				m_rzx_load <= '1';
+			when S8 =>
 				o_done <= '1';
 				m_zx_sel <= '1';
         end case;
 	end process;
 
 end Behavioral;
-
-
-
-
