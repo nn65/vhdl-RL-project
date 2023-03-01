@@ -31,8 +31,8 @@ signal t_rz0_load : STD_LOGIC;
 signal t_rz1_load : STD_LOGIC;
 signal t_rz2_load : STD_LOGIC;
 signal t_rz3_load : STD_LOGIC;
-signal t_mem_addr : STD_LOGIC_VECTOR(15 downto 0);
-signal t_buffer : STD_LOGIC_VECTOR(17 downto 0);
+signal t_buffer : STD_LOGIC_VECTOR(16 downto 0);
+signal t_buffer_bitwise : STD_LOGIC_VECTOR(15 downto 0);
 
 signal t_rz0 : STD_LOGIC_VECTOR(7 downto 0);
 signal t_rz1 : STD_LOGIC_VECTOR(7 downto 0);
@@ -44,21 +44,47 @@ begin
     shift: process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
-            t_buffer <= "000000000000000000";
+            t_buffer <= "00000000000000000";
         elsif rising_edge(i_clk) then
-            if m_canale_save = '1' then
-                t_canale <= t_buffer(1 downto 0);
-                t_buffer(0) <= '0';
-                t_buffer(1) <= '0';
-            end if;
-            if m_indirizzo_save = '1' then
-                t_mem_addr <= t_buffer(16 downto 1);
-            end if;
-            t_buffer(17 downto 1) <= t_buffer(16 downto 0);
+--            if m_canale_save = '1' then
+--                t_canale <= t_buffer(1 downto 0);
+--                t_buffer(0) <= '0';
+--                t_buffer(1) <= '0';
+--            end if;
+--            if m_indirizzo_save = '1' then
+--                t_mem_addr <= t_buffer(16 downto 1);
+--            end if;
+            t_buffer(16 downto 1) <= t_buffer(15 downto 0);
             t_buffer(0) <= '0';
             t_buffer(0) <= i_w;
         end if;
-        o_mem_addr <= t_mem_addr;
+  
+    end process;
+    
+    process(i_clk, i_rst, m_canale_save)
+    begin
+        if(i_rst = '1') then
+            t_buffer_bitwise <= "0000000000000000";
+        elsif rising_edge(m_canale_save) then
+            t_canale <= t_buffer(1 downto 0);
+--            t_buffer(0) <= '0';
+--            t_buffer(1) <= '0';
+        end if;
+        if rising_edge(i_clk) and m_canale_save = '0' then
+            t_buffer_bitwise(15 downto 1) <= t_buffer_bitwise(14 downto 0);
+            t_buffer_bitwise(0) <= '1';
+        end if;
+        if rising_edge(i_clk) and m_canale_save = '1' then
+            t_buffer_bitwise <= "0000000000000000";
+        end if;
+    end process;
+    
+    process(m_indirizzo_save)
+    begin
+        if rising_edge(m_indirizzo_save) then
+            o_mem_addr <= t_buffer(16 downto 1) and t_buffer_bitwise;
+            --o_mem_addr <= t_mem_addr;
+        end if;
     end process;
     
 --    with m_canale_save select
@@ -109,7 +135,7 @@ begin
     -- Uscita e gestione dei registri
     --------------------------------------------
 	-- Creo un demultiplexer per gestire il segnale di scrittura sui registri. In questo caso uso un DEMUX per poter indirizzare il giusto canale.
-	rzx_demux: process(i_clk, i_rst)
+	rzx_demux: process(m_rzx_load)
 	begin
 	   case t_canale is 
             when "00" =>
@@ -382,8 +408,9 @@ begin
 			when S7 =>
 				m_rzx_load <= '1';
 			when S8 =>
+			    m_zx_sel <= '1';
 				o_done <= '1';
-				m_zx_sel <= '1';
+				
         end case;
 	end process;
 
