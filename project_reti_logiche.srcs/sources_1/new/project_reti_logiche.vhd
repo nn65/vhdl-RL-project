@@ -135,38 +135,50 @@ begin
     -- Uscita e gestione dei registri
     --------------------------------------------
 	-- Creo un demultiplexer per gestire il segnale di scrittura sui registri. In questo caso uso un DEMUX per poter indirizzare il giusto canale.
-	rzx_demux: process(m_rzx_load)
-	begin
-	   case t_canale is 
-            when "00" =>
-                t_rz0_load <= m_rzx_load;
-                t_rz1_load <= '0';
-                t_rz2_load <= '0';
-                t_rz3_load <= '0';
-            when "01" =>
-                t_rz0_load <= '0';
-                t_rz1_load <= m_rzx_load;
-                t_rz2_load <= '0';
-                t_rz3_load <= '0';
-            when "10" =>
-                t_rz0_load <= '0';
-                t_rz1_load <= '0';
-                t_rz2_load <= m_rzx_load;
-                t_rz3_load <= '0';
-            when "11" =>
-                t_rz0_load <= '0';
-                t_rz1_load <= '0';
-                t_rz2_load <= '0';
-                t_rz3_load <= m_rzx_load;
-            when others =>
-                t_rz0_load <= 'X';
-                t_rz1_load <= 'X';
-                t_rz2_load <= 'X';
-                t_rz3_load <= 'X';
-        end case;
-	end process;
+	t_rz0_load <= m_rzx_load when t_canale = "00" else
+	              '0';
+	              
+    t_rz1_load <= m_rzx_load when t_canale = "01" else
+                  '0';
+
+    t_rz2_load <= m_rzx_load when t_canale = "10" else
+                  '0';
+                  
+    t_rz3_load <= m_rzx_load when t_canale = "11" else
+                  '0';
+
+--	rzx_demux: process(m_rzx_load)
+--	begin
+--	   case t_canale is 
+--            when "00" =>
+--                t_rz0_load <= m_rzx_load;
+--                t_rz1_load <= '0';
+--                t_rz2_load <= '0';
+--                t_rz3_load <= '0';
+--            when "01" =>
+--                t_rz0_load <= '0';
+--                t_rz1_load <= m_rzx_load;
+--                t_rz2_load <= '0';
+--                t_rz3_load <= '0';
+--            when "10" =>
+--                t_rz0_load <= '0';
+--                t_rz1_load <= '0';
+--                t_rz2_load <= m_rzx_load;
+--                t_rz3_load <= '0';
+--            when "11" =>
+--                t_rz0_load <= '0';
+--                t_rz1_load <= '0';
+--                t_rz2_load <= '0';
+--                t_rz3_load <= m_rzx_load;
+--            when others =>
+--                t_rz0_load <= 'X';
+--                t_rz1_load <= 'X';
+--                t_rz2_load <= 'X';
+--                t_rz3_load <= 'X';
+--        end case;
+--	end process;
 			
-	-- Sistemo l'uscita cpn quello che leggo dalla memoria. Creo 4 registri diversi, perchè il valore delle uscite devono rimanere le stesse, ad eccezione dell'uscita corretta.
+	-- Sistemo l'uscita con quello che leggo dalla memoria. Creo 4 registri diversi, perchè il valore delle uscite devono rimanere le stesse, ad eccezione dell'uscita corretta.
 	rz0: process(i_clk, i_rst)
 	begin
 		if(i_rst = '1') then
@@ -292,7 +304,7 @@ signal m_rzx_load : STD_LOGIC;
 signal m_zx_sel : STD_LOGIC;
 
 -- Definisco la macchina a stati
-type S is (S0, S1, S2, S3, S4, S5, S6, S7, S8);
+type S is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9);
 signal cur_state, next_state : S;
 
 begin
@@ -368,6 +380,8 @@ begin
 			when S7 =>
 				next_state <= S8;
             when S8 =>
+                next_state <= S9;
+            when S9 =>
                 next_state <= S0;
         end case;
 	end process;
@@ -409,7 +423,8 @@ begin
 				m_rzx_load <= '1';
 			when S8 =>
 			    m_zx_sel <= '1';
-				o_done <= '1';
+			    o_done <= '1';
+            when S9 =>
 				
         end case;
 	end process;
