@@ -239,22 +239,22 @@ signal cur_state, next_state : S;
 begin
 -- Istanza del datapath.
 	DATAPATH0: datapath port map(
-		i_clk,
-		i_rst,
-		i_start,
-		i_w,
-		i_mem_data,
+		i_clk => i_clk,
+		i_rst => i_rst,
+		i_start => i_start,
+		i_w => i_w,
+		i_mem_data => i_mem_data,
 		
-		m_canale_save,
-		m_indirizzo_save,
-		m_rzx_load,
-		m_zx_sel,
+		m_canale_save => m_canale_save,
+		m_indirizzo_save => m_indirizzo_save,
+		m_rzx_load => m_rzx_load,
+		m_zx_sel => m_zx_sel,
 		
-		o_z0,
-		o_z1,
-		o_z2,
-		o_z3,
-		o_mem_addr
+		o_z0 => o_z0,
+		o_z1 => o_z1,
+		o_z2 => o_z2,
+		o_z3 => o_z3,
+		o_mem_addr => o_mem_addr
 	);
 
 	--------------------------------------------
@@ -327,7 +327,7 @@ begin
 		o_mem_en <= '0';
 		o_mem_we <= '0';
 		-- Uscite primarie
-		o_done <= '0';
+		--o_done <= '0';
 		
 		-- Assegnazione dei vari segnali quando sono nello stato desiderato
 		case cur_state is
@@ -345,10 +345,12 @@ begin
 				m_rzx_load <= '1';
 			when S8 =>
 			    m_zx_sel <= '1';  -- m_zx_sel = o_done
-			    o_done <= '1';
+			    --o_done <= '1';
             when S9 =>
 				
         end case;
 	end process;
+	
+	o_done <= m_zx_sel;
 
 end Behavioral;
