@@ -64,6 +64,22 @@ begin
     -- un 1 alla volta. Questo serve quando viene mandato il segnale di "salva indirizzo" dalla FSM.
     -- In questo modo dal buffer posso buttare via il canale, che viene comunque salvato nel buffer, e lasciare solo l'indirizzo.
     -- 
+--    shift_mask: process(i_clk, i_rst, m_canale_save)
+--    begin
+--        if(i_rst = '1') then
+--            t_buffer_mask <= "0000000000000000";
+--            t_canale <= "00";
+--        elsif rising_edge(m_canale_save) then
+--            t_canale <= t_buffer(1 downto 0);
+--        end if;
+--        if rising_edge(i_clk) and m_canale_save = '0' then
+--            t_buffer_mask(15 downto 1) <= t_buffer_mask(14 downto 0);
+--            t_buffer_mask(0) <= '1';
+--        end if;
+--        if rising_edge(i_clk) and m_canale_save = '1' then
+--            t_buffer_mask <= "0000000000000000";
+--        end if;
+--    end process;
     shift_mask: process(i_clk, i_rst, m_canale_save)
     begin
         if(i_rst = '1') then
@@ -72,12 +88,13 @@ begin
         elsif rising_edge(m_canale_save) then
             t_canale <= t_buffer(1 downto 0);
         end if;
-        if rising_edge(i_clk) and m_canale_save = '0' then
-            t_buffer_mask(15 downto 1) <= t_buffer_mask(14 downto 0);
-            t_buffer_mask(0) <= '1';
-        end if;
-        if rising_edge(i_clk) and m_canale_save = '1' then
-            t_buffer_mask <= "0000000000000000";
+        if rising_edge(i_clk) then
+            if(m_canale_save = '0') then
+                t_buffer_mask(15 downto 1) <= t_buffer_mask(14 downto 0);
+                t_buffer_mask(0) <= '1';
+            else
+                t_buffer_mask <= "0000000000000000";
+            end if;
         end if;
     end process;
     

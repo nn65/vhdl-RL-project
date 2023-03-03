@@ -1,4 +1,3 @@
-
 -- TB EXAMPLE PFRL 2022-2023
 
 LIBRARY ieee;
@@ -23,22 +22,34 @@ ARCHITECTURE projecttb OF project_tb IS
     SIGNAL tb_z0, tb_z1, tb_z2, tb_z3 : STD_LOGIC_VECTOR (7 DOWNTO 0);
     SIGNAL tb_w : STD_LOGIC;
 
-    CONSTANT SCENARIOLENGTH : INTEGER := 35; -- 5 + 3 + 20 + 7   (RST) + (CH2-MEM[1]) + 20 CYCLES + (CH1-MEM[6])
-    SIGNAL scenario_rst : unsigned(0 TO SCENARIOLENGTH - 1)     := "00110" & "000" & "00000000000000000000" & "0000000";
-    SIGNAL scenario_start : unsigned(0 TO SCENARIOLENGTH - 1)   := "00000" & "111" & "00000000000000000000" & "1111100";
-    SIGNAL scenario_w : unsigned(0 TO SCENARIOLENGTH - 1)       := "00000" & "101" & "00000000000000000000" & "0111000";
+    CONSTANT SCENARIOLENGTH : INTEGER := 594;
+    SIGNAL scenario_rst : unsigned(0 TO SCENARIOLENGTH - 1)     := "010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    SIGNAL scenario_start : unsigned(0 TO SCENARIOLENGTH - 1)   := "000001111000000000000000000001111111111111100000000000000000000111111111000000000000000000001111111111111000000000000000000001100000000000000000000111111111111000000000000000000001111100000000000000000000111111111111100000000000000000000111111111111111111000000000000000000001111111100000000000000000000111111111111100000000000000000000111111111111000000000000000000001111100000000000000000000111111111100000000000000000000111111111111100000000000000000000111111111111110000000000000000000011111111111110000000000000000000011100000000000000000000111100000000000000000000111100000000000000000000";
+    SIGNAL scenario_w : unsigned(0 TO SCENARIOLENGTH - 1)       := "000001111000000000000000000000110111111001100000000000000000000101000101000000000000000000000011100011101000000000000000000001100000000000000000000011111011001000000000000000000000011000000000000000000000111110001110100000000000000000000111111111111111111000000000000000000001011100100000000000000000000001010010000000000000000000000000001011010001000000000000000000001111000000000000000000000011101011000000000000000000000001010010000000000000000000000000111011111100110000000000000000000001101001000000000000000000000000000100000000000000000000011000000000000000000000101000000000000000000000";
     -- Channel 2 -> MEM[1] -> 162
     -- Channel 1 -> MEM[2] -> 75
 
     TYPE ram_type IS ARRAY (65535 DOWNTO 0) OF STD_LOGIC_VECTOR(7 DOWNTO 0);
-    SIGNAL RAM : ram_type := (  0 => STD_LOGIC_VECTOR(to_unsigned(2, 8)),
-                                1 => STD_LOGIC_VECTOR(to_unsigned(162, 8)),
-                                2 => STD_LOGIC_VECTOR(to_unsigned(75, 8)),
-                                3 => STD_LOGIC_VECTOR(to_unsigned(175, 8)),
-                                6 => STD_LOGIC_VECTOR(to_unsigned(88, 8)),
-                                OTHERS => "00000000"-- (OTHERS => '0')
+    SIGNAL RAM : ram_type := (  0 => STD_LOGIC_VECTOR(to_unsigned(20, 8)), 
+				1 => STD_LOGIC_VECTOR(to_unsigned(162, 8)), 
+				2 => STD_LOGIC_VECTOR(to_unsigned(75, 8)), 
+				3 => STD_LOGIC_VECTOR(to_unsigned(175, 8)), 
+				6 => STD_LOGIC_VECTOR(to_unsigned(88, 8)), 
+				57 => STD_LOGIC_VECTOR(to_unsigned(18, 8)), 
+				985 => STD_LOGIC_VECTOR(to_unsigned(456, 8)), 
+				721 => STD_LOGIC_VECTOR(to_unsigned(98, 8)), 
+				420 => STD_LOGIC_VECTOR(to_unsigned(420, 8)), 
+				65535 => STD_LOGIC_VECTOR(to_unsigned(400, 8)), 
+				1821 => STD_LOGIC_VECTOR(to_unsigned(697, 8)), 
+				1312 => STD_LOGIC_VECTOR(to_unsigned(985, 8)), 
+				7765 => STD_LOGIC_VECTOR(to_unsigned(894, 8)), 
+				214 => STD_LOGIC_VECTOR(to_unsigned(59, 8)), 
+				9 => STD_LOGIC_VECTOR(to_unsigned(654, 8)), 
+				3059 => STD_LOGIC_VECTOR(to_unsigned(6, 8)), 
+				69 => STD_LOGIC_VECTOR(to_unsigned(69, 8)), 
+				 OTHERS => "00000000"-- (OTHERS => '0')
                             );
-                    
+
     COMPONENT project_reti_logiche IS
         PORT (
             i_clk : IN STD_LOGIC;
@@ -102,7 +113,7 @@ BEGIN
             END IF;
         END IF;
     END PROCESS;
-    
+
     -- This process provides the correct scenario on the signal controlled by the TB
     createScenario : PROCESS (tb_clk)
     BEGIN
@@ -127,6 +138,7 @@ BEGIN
         ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postreset Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
         ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postreset Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
         ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postreset Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        
         WAIT UNTIL tb_start = '1';
         ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
         ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
@@ -135,21 +147,398 @@ BEGIN
         WAIT UNTIL tb_done = '1';
         --WAIT UNTIL rising_edge(tb_clk);
         WAIT FOR CLOCK_PERIOD/2;
-        ASSERT tb_z2 = std_logic_vector(to_unsigned(162, 8))  REPORT "TEST FALLITO (Z2 ---) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; --. Expected  209  found " & integer'image(tb_z0))))  severity failure;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(0, 8))  REPORT "TEST FALLITO (Z0 != 0)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(0, 8))  REPORT "TEST FALLITO (Z1 != 0)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(0, 8))  REPORT "TEST FALLITO (Z2 != 0)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(175, 8))  REPORT "TEST FALLITO (Z3 != 175)" severity failure;        
         WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
         ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
         ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
         ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
         ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
         WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
         WAIT UNTIL tb_done = '1';
-        
         --WAIT UNTIL rising_edge(tb_clk);
         WAIT FOR CLOCK_PERIOD/2;
-
-        ASSERT tb_z1 = std_logic_vector(to_unsigned(88, 8))  REPORT "TEST FALLITO (Z1 ---) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; --. Expected  209  found " & integer'image(tb_z0))))  severity failure;
-        ASSERT tb_z2 = std_logic_vector(to_unsigned(162, 8))  REPORT "TEST FALLITO (Z2 ---) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; --. Expected  209  found " & integer'image(tb_z0))))  severity failure;
-
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(0, 8))  REPORT "TEST FALLITO (Z0 != 0)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(6, 8))  REPORT "TEST FALLITO (Z1 != 6)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(0, 8))  REPORT "TEST FALLITO (Z2 != 0)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(175, 8))  REPORT "TEST FALLITO (Z3 != 175)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(0, 8))  REPORT "TEST FALLITO (Z0 != 0)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(6, 8))  REPORT "TEST FALLITO (Z1 != 6)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(69, 8))  REPORT "TEST FALLITO (Z2 != 69)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(175, 8))  REPORT "TEST FALLITO (Z3 != 175)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(697, 8))  REPORT "TEST FALLITO (Z0 != 697)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(6, 8))  REPORT "TEST FALLITO (Z1 != 6)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(69, 8))  REPORT "TEST FALLITO (Z2 != 69)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(175, 8))  REPORT "TEST FALLITO (Z3 != 175)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(697, 8))  REPORT "TEST FALLITO (Z0 != 697)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(6, 8))  REPORT "TEST FALLITO (Z1 != 6)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(69, 8))  REPORT "TEST FALLITO (Z2 != 69)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(20, 8))  REPORT "TEST FALLITO (Z3 != 20)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(697, 8))  REPORT "TEST FALLITO (Z0 != 697)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(456, 8))  REPORT "TEST FALLITO (Z1 != 456)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(69, 8))  REPORT "TEST FALLITO (Z2 != 69)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(20, 8))  REPORT "TEST FALLITO (Z3 != 20)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(88, 8))  REPORT "TEST FALLITO (Z0 != 88)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(456, 8))  REPORT "TEST FALLITO (Z1 != 456)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(69, 8))  REPORT "TEST FALLITO (Z2 != 69)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(20, 8))  REPORT "TEST FALLITO (Z3 != 20)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(88, 8))  REPORT "TEST FALLITO (Z0 != 88)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(456, 8))  REPORT "TEST FALLITO (Z1 != 456)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(69, 8))  REPORT "TEST FALLITO (Z2 != 69)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(697, 8))  REPORT "TEST FALLITO (Z3 != 697)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(88, 8))  REPORT "TEST FALLITO (Z0 != 88)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(456, 8))  REPORT "TEST FALLITO (Z1 != 456)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(69, 8))  REPORT "TEST FALLITO (Z2 != 69)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(400, 8))  REPORT "TEST FALLITO (Z3 != 400)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(88, 8))  REPORT "TEST FALLITO (Z0 != 88)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(456, 8))  REPORT "TEST FALLITO (Z1 != 456)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(18, 8))  REPORT "TEST FALLITO (Z2 != 18)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(400, 8))  REPORT "TEST FALLITO (Z3 != 400)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(985, 8))  REPORT "TEST FALLITO (Z0 != 985)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(456, 8))  REPORT "TEST FALLITO (Z1 != 456)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(18, 8))  REPORT "TEST FALLITO (Z2 != 18)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(400, 8))  REPORT "TEST FALLITO (Z3 != 400)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(98, 8))  REPORT "TEST FALLITO (Z0 != 98)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(456, 8))  REPORT "TEST FALLITO (Z1 != 456)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(18, 8))  REPORT "TEST FALLITO (Z2 != 18)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(400, 8))  REPORT "TEST FALLITO (Z3 != 400)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(98, 8))  REPORT "TEST FALLITO (Z0 != 98)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(456, 8))  REPORT "TEST FALLITO (Z1 != 456)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(18, 8))  REPORT "TEST FALLITO (Z2 != 18)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(88, 8))  REPORT "TEST FALLITO (Z3 != 88)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(98, 8))  REPORT "TEST FALLITO (Z0 != 98)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(59, 8))  REPORT "TEST FALLITO (Z1 != 59)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(18, 8))  REPORT "TEST FALLITO (Z2 != 18)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(88, 8))  REPORT "TEST FALLITO (Z3 != 88)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(985, 8))  REPORT "TEST FALLITO (Z0 != 985)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(59, 8))  REPORT "TEST FALLITO (Z1 != 59)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(18, 8))  REPORT "TEST FALLITO (Z2 != 18)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(88, 8))  REPORT "TEST FALLITO (Z3 != 88)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(985, 8))  REPORT "TEST FALLITO (Z0 != 985)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(59, 8))  REPORT "TEST FALLITO (Z1 != 59)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(18, 8))  REPORT "TEST FALLITO (Z2 != 18)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(6, 8))  REPORT "TEST FALLITO (Z3 != 6)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(985, 8))  REPORT "TEST FALLITO (Z0 != 985)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(985, 8))  REPORT "TEST FALLITO (Z1 != 985)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(18, 8))  REPORT "TEST FALLITO (Z2 != 18)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(6, 8))  REPORT "TEST FALLITO (Z3 != 6)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(162, 8))  REPORT "TEST FALLITO (Z0 != 162)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(985, 8))  REPORT "TEST FALLITO (Z1 != 985)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(18, 8))  REPORT "TEST FALLITO (Z2 != 18)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(6, 8))  REPORT "TEST FALLITO (Z3 != 6)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(162, 8))  REPORT "TEST FALLITO (Z0 != 162)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(75, 8))  REPORT "TEST FALLITO (Z1 != 75)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(18, 8))  REPORT "TEST FALLITO (Z2 != 18)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(6, 8))  REPORT "TEST FALLITO (Z3 != 6)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+    
+        WAIT UNTIL tb_start = '1';
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (poststart Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+        WAIT UNTIL tb_done = '1';
+        --WAIT UNTIL rising_edge(tb_clk);
+        WAIT FOR CLOCK_PERIOD/2;
+                ASSERT tb_z0 = std_logic_vector(to_unsigned(162, 8))  REPORT "TEST FALLITO (Z0 != 162)" severity failure;
+        ASSERT tb_z1 = std_logic_vector(to_unsigned(75, 8))  REPORT "TEST FALLITO (Z1 != 75)" severity failure;
+        ASSERT tb_z2 = std_logic_vector(to_unsigned(75, 8))  REPORT "TEST FALLITO (Z2 != 75)" severity failure;
+        ASSERT tb_z3 = std_logic_vector(to_unsigned(6, 8))  REPORT "TEST FALLITO (Z3 != 6)" severity failure;        
+        WAIT UNTIL tb_done = '0';
+        --ADDED BY GIANLUCA 
+	WAIT FOR CLOCK_PERIOD/2;
+        ASSERT tb_z0 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z0))) severity failure; 
+        ASSERT tb_z1 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z1))) severity failure; 
+        ASSERT tb_z2 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z2))) severity failure; 
+        ASSERT tb_z3 = "00000000" REPORT "TEST FALLITO (postdone Z0--Z3 != 0 ) found " & integer'image(to_integer(unsigned(tb_z3))) severity failure; 
+     
         ASSERT false REPORT "Simulation Ended! TEST PASSATO (EXAMPLE)" SEVERITY failure;
     END PROCESS testRoutine;
 
