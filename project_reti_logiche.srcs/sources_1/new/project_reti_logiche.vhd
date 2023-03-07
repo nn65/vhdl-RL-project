@@ -5,12 +5,11 @@ entity datapath is
     port(
         i_clk : in STD_LOGIC;
         i_rst : in STD_LOGIC;
-        i_start : in STD_LOGIC;
         i_w : in STD_LOGIC;
 		i_mem_data : in STD_LOGIC_VECTOR(7 downto 0);
 		
-		m_canale_save : in STD_LOGIC;
-		m_indirizzo_save : in STD_LOGIC;
+		m_channel_save : in STD_LOGIC;
+		m_address_save : in STD_LOGIC;
 		m_rzx_load : in STD_LOGIC;
 		m_zx_sel : in STD_LOGIC;
         
@@ -24,7 +23,7 @@ end datapath;
 
 architecture Behavioral of datapath is
 -- SIGNAL
-signal t_canale : STD_LOGIC_VECTOR(1 downto 0);
+signal t_channel : STD_LOGIC_VECTOR(1 downto 0);
 signal t_rz0_load : STD_LOGIC;
 signal t_rz1_load : STD_LOGIC;
 signal t_rz2_load : STD_LOGIC;
@@ -44,9 +43,10 @@ begin
     --------------------------------------------
     -- A ogni colpo di clock, salvo quello che leggo da W in un buffer. 
     -- In questo modo posso creare un indirizzo da MAX 17 bit. Se qualche bit del canale si perde non mi interessa
-    -- perchè lo salvo nel registro t_canale. I 17 bit servono per non perdere nessuno dei 16 bit dell'indirizzo.
+    -- perchè lo salvo nel registro t_channel. I 17 bit servono per non perdere nessuno dei 16 bit dell'indirizzo.
     -- Visto che quest'ultimo scorrendo può portarsi in una posizione in più a sx durante lo shift, rischierebbe di perdere un bit.
-    shift_buffer: process(i_clk, i_rst)
+    -- Causa: la macchina a stati mi restituisce il segnale "m_address_save" un ciclo dopo, quindi se non creo un bit in più nel buffer, lo perdo.
+    shifter_buffer: process(i_clk, i_rst)
     begin
         if(i_rst = '1') then
             t_buffer <= "00000000000000000";
@@ -63,33 +63,18 @@ begin
     -- Creo un buffer a scorrimento. Ogni ciclo di clock (rising edge) viene shiftato a sx di una posizione e viene aggiunto
     -- un 1 alla volta. Questo serve quando viene mandato il segnale di "salva indirizzo" dalla FSM.
     -- In questo modo dal buffer posso buttare via il canale, che viene comunque salvato nel buffer, e lasciare solo l'indirizzo.
-    -- 
---    shift_mask: process(i_clk, i_rst, m_canale_save)
---    begin
---        if(i_rst = '1') then
---            t_buffer_mask <= "0000000000000000";
---            t_canale <= "00";
---        elsif rising_edge(m_canale_save) then
---            t_canale <= t_buffer(1 downto 0);
---        end if;
---        if rising_edge(i_clk) and m_canale_save = '0' then
---            t_buffer_mask(15 downto 1) <= t_buffer_mask(14 downto 0);
---            t_buffer_mask(0) <= '1';
---        end if;
---        if rising_edge(i_clk) and m_canale_save = '1' then
---            t_buffer_mask <= "0000000000000000";
---        end if;
---    end process;
-    shift_mask: process(i_clk, i_rst, m_canale_save)
+    -- Eseguo un AND bit a bit solamente sul fronte di salita del segnale "salva indirizzo". In questo modo posso continuare a far scorrere
+    -- anche se inutilmente il buffer. Mi evita diversi problemi di implementazione.
+    shifter_mask: process(i_clk, i_rst, m_channel_save)
     begin
         if(i_rst = '1') then
             t_buffer_mask <= "0000000000000000";
-            t_canale <= "00";
-        elsif rising_edge(m_canale_save) then
-            t_canale <= t_buffer(1 downto 0);
+            t_channel <= "00";
+        elsif rising_edge(m_channel_save) then
+            t_channel <= t_buffer(1 downto 0);
         end if;
         if rising_edge(i_clk) then
-            if(m_canale_save = '0') then
+            if(m_channel_save = '0') then
                 t_buffer_mask(15 downto 1) <= t_buffer_mask(14 downto 0);
                 t_buffer_mask(0) <= '1';
             else
@@ -98,11 +83,11 @@ begin
         end if;
     end process;
     
-    indirizzo_saver: process(i_rst, m_indirizzo_save)
+    address_saver: process(i_rst, m_address_save)
     begin
         if(i_rst = '1') then
             o_mem_addr <= "0000000000000000";
-        elsif rising_edge(m_indirizzo_save) then
+        elsif rising_edge(m_address_save) then
             o_mem_addr <= t_buffer(16 downto 1) and t_buffer_mask;
         end if;
     end process;
@@ -113,16 +98,16 @@ begin
 	-- Creo un demultiplexer per gestire il segnale di scrittura sui registri. In questo caso uso un DEMUX per poter indirizzare il giusto canale.
 	-- In questo modo posso selezionare il registro su cui scrivere il valore trovato quando mi arriva il segnale dalla FSM
 	-- di salvare il valore restituitomi dalla memoria.
-	t_rz0_load <= m_rzx_load when t_canale = "00" else
+	t_rz0_load <= m_rzx_load when t_channel = "00" else
 	              '0';
 	              
-    t_rz1_load <= m_rzx_load when t_canale = "01" else
+    t_rz1_load <= m_rzx_load when t_channel = "01" else
                   '0';
 
-    t_rz2_load <= m_rzx_load when t_canale = "10" else
+    t_rz2_load <= m_rzx_load when t_channel = "10" else
                   '0';
                   
-    t_rz3_load <= m_rzx_load when t_canale = "11" else
+    t_rz3_load <= m_rzx_load when t_channel = "11" else
                   '0';
 			
 	-- Sistemo l'uscita con quello che leggo dalla memoria.
@@ -227,12 +212,11 @@ component datapath is
 	port(
         i_clk : in STD_LOGIC;
         i_rst : in STD_LOGIC;
-        i_start : in STD_LOGIC;
         i_w : in STD_LOGIC;
 		i_mem_data : in STD_LOGIC_VECTOR(7 downto 0);
 		
-		m_canale_save : in STD_LOGIC;
-		m_indirizzo_save : in STD_LOGIC;
+		m_channel_save : in STD_LOGIC;
+		m_address_save : in STD_LOGIC;
 		m_rzx_load : in STD_LOGIC;
 		m_zx_sel : in STD_LOGIC;
         
@@ -244,13 +228,13 @@ component datapath is
     );
 end component;
 -- Chiamo i signal come il nome dei componenti per mappare automaticamente 1:1;
-signal m_canale_save : STD_LOGIC;
-signal m_indirizzo_save : STD_LOGIC;
+signal m_channel_save : STD_LOGIC;
+signal m_address_save : STD_LOGIC;
 signal m_rzx_load : STD_LOGIC;
 signal m_zx_sel : STD_LOGIC;
 
 -- Definisco la macchina a stati
-type S is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9);
+type S is (S0, S1, S2, S3, S4, S5, S6, S7, S8);
 signal cur_state, next_state : S;
 
 begin
@@ -258,12 +242,11 @@ begin
 	DATAPATH0: datapath port map(
 		i_clk => i_clk,
 		i_rst => i_rst,
-		i_start => i_start,
 		i_w => i_w,
 		i_mem_data => i_mem_data,
 		
-		m_canale_save => m_canale_save,
-		m_indirizzo_save => m_indirizzo_save,
+		m_channel_save => m_channel_save,
+		m_address_save => m_address_save,
 		m_rzx_load => m_rzx_load,
 		m_zx_sel => m_zx_sel,
 		
@@ -324,8 +307,6 @@ begin
 			when S7 =>
 				next_state <= S8;
             when S8 =>
-                next_state <= S9;
-            when S9 =>
                 next_state <= S0;
         end case;
 	end process;
@@ -336,34 +317,30 @@ begin
 	process(cur_state)
 	begin
 		-- Segnali del datapath
-		m_canale_save <= '0';
-		m_indirizzo_save <= '0';
+		m_channel_save <= '0';
+		m_address_save <= '0';
 		m_rzx_load <= '0';
 		m_zx_sel <= '0';
 		-- Segnali memoria
 		o_mem_en <= '0';
 		o_mem_we <= '0';
-		-- Uscite primarie
-		--o_done <= '0';
 		
 		-- Assegnazione dei vari segnali quando sono nello stato desiderato
 		case cur_state is
 			when S0 =>
 			when S1 =>
 			when S2 =>
-				m_canale_save <= '1';
+				m_channel_save <= '1';
 			when S3 =>
             when S4 =>
-                m_indirizzo_save <= '1';
+                m_address_save <= '1';
 			when S5 =>
 				o_mem_en <= '1';
 			when S6 =>
 			when S7 =>
 				m_rzx_load <= '1';
 			when S8 =>
-			    m_zx_sel <= '1';  -- m_zx_sel = o_done
-			    --o_done <= '1';
-            when S9 =>
+			    m_zx_sel <= '1';
 				
         end case;
 	end process;
