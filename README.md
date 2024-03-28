@@ -1,4 +1,4 @@
-# vhdl-RL-project
+# Digital logic design project
 ## Introduction
 [Here](https://github.com/nn65/vhdl-RL-project/blob/main/deliveries/specs.pdf) you can find all the specifications about the project. [Here](https://github.com/nn65/vhdl-RL-project/blob/main/deliveries/report.pdf) the full report of the project.
 
